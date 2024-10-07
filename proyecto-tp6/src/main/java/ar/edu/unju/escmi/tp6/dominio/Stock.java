@@ -27,4 +27,5 @@ public class Stock {
     public void setProducto(Producto producto) {
         this.producto = producto;
     }
+    
 }
