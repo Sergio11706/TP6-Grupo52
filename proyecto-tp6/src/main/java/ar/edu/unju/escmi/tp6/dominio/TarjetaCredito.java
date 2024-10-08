@@ -57,6 +57,10 @@ public class TarjetaCredito {
 	}
 
 	
+	public void mostrarTarjeta() {
+		System.out.println("\nNumero: " +numero);
+	}
+	
 	@Override
 	public String toString() {
 		return "\nNumero: " + numero + " Fecha De Caducacion: " + fechaCaducacion + "\nNombre Titular: "

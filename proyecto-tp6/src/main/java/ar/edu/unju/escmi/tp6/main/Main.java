@@ -1,9 +1,15 @@
 package ar.edu.unju.escmi.tp6.main;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import ar.edu.unju.escmi.tp6.collections.CollectionCliente;
+import ar.edu.unju.escmi.tp6.collections.CollectionCredito;
+import ar.edu.unju.escmi.tp6.collections.CollectionFactura;
 import ar.edu.unju.escmi.tp6.collections.CollectionProducto;
 import ar.edu.unju.escmi.tp6.collections.CollectionStock;
 import ar.edu.unju.escmi.tp6.collections.CollectionTarjetaCredito;
@@ -34,7 +40,6 @@ public class Main {
             
             switch (opcion) {
 				case 1: 
-					registrarCliente(scanner); 					
 					realizarVenta(scanner);
 				break;
 				
@@ -53,7 +58,13 @@ public class Main {
 				break;
 				
 				case 5: 
-					revisarCreditos();
+					List<TarjetaCredito> tarjetas = CollectionTarjetaCredito.tarjetas;
+					for(TarjetaCredito TarjetaCredito : tarjetas) {
+						TarjetaCredito.mostrarTarjeta();
+					}
+					System.out.println("\nIngrese el numero de la tarjeta: ");
+					long num = scanner.nextLong();
+					System.out.println("Los creditos del cliente son: " +revisarCreditos(num));
 				break;
 				
 				case 6:
@@ -68,24 +79,6 @@ public class Main {
 
 	}
 	
-	
-	public static void registrarCliente(Scanner scanner) {
-	  System.out.println("\nRegistrar Cliente");
-	  System.out.println("Ingrese el dni del cliente: "); 
-	  long dniCliente = scanner.nextLong(); 
-	  scanner.nextLine();
-	  System.out.println("Ingrese nombre del cliente: ");
-	  String nombreCliente = scanner.nextLine();
-	  System.out.println("Ingrese direccion del cliente: "); 
-	  String dirCliente = scanner.nextLine(); 
-	  System.out.println("Ingrese el telefono del cliente: ");
-	  String telCliente = scanner.nextLine();
-	  
-	  Cliente cliente = new Cliente(dniCliente, nombreCliente, dirCliente,
-	  telCliente); CollectionCliente.agregarCliente(cliente); 
-	}
-	 
-
 	public static long mostrarListaProd() {
 		List<Producto> productos = CollectionProducto.productos;
 		for(Producto producto : productos) {
@@ -98,44 +91,86 @@ public class Main {
 	  
 	
 	public static void realizarVenta(Scanner scanner){
+		TarjetaCredito tarjetaEncontrada = null;
+		System.out.println("Ingrese el codigo del producto a comprar: ");
 		long codigo = mostrarListaProd();
+		Producto productoAcomprar = CollectionProducto.buscarProducto(codigo);
+		
+		List<Cliente> clientes = CollectionCliente.clientes;
+		for (Cliente cliente : clientes) {
+			cliente.mostrarCliente();
+		}
+		System.out.println("\nIngrese el DNI del cliente: ");
+		long dni = scanner.nextLong();
+		
+		List<TarjetaCredito> tarjetas = CollectionTarjetaCredito.tarjetas;
+		for(TarjetaCredito TarjetaCredito : tarjetas) {
+			TarjetaCredito.mostrarTarjeta();
+		}
+		System.out.println("\nIngrese el numero de la tarjeta: ");
+		long num = scanner.nextLong();
+		
+		tarjetaEncontrada = CollectionTarjetaCredito.buscarTarjetaCredito(num);
+		
+		
 		if(consultarStock(codigo) > 0) {
-			String opc;
-			long dniCliente = 0;
-			do {
-				System.out.println("\nClientes disponibles: ");
-				List<Cliente> clientes = CollectionCliente.clientes;
-				for (Cliente cliente : clientes) {
-					cliente.mostrarCliente();
-				}
-				System.out.println("Desea ingresar mas usuarios? (Y/N)");
-				opc = scanner.nextLine();
-				switch (opc) {
-					case "y": 
-						registrarCliente(scanner);
-					break;
-					
-					case "n":
-						System.out.println("\nIngrese el DNI del cliente: ");
-						dniCliente = scanner.nextLong();
-					break;
-					
-					default:
-						throw new IllegalArgumentException("Opcion incorrecta: " + opc);
+			if (productoAcomprar.getOrigenFabricacion().contains("Argentina")) {
+					if (revisarCreditos(num)>productoAcomprar.getPrecioUnitario()) {
+						Factura factura = new Factura();
+						Credito credito = new Credito();
+						factura = crearFactura(dni, codigo);
+						credito = crearCredito(tarjetaEncontrada, factura);
+						
+						
 					}
-			} while (opc == "n");
-			
-			List<TarjetaCredito> tarjetas = CollectionTarjetaCredito.tarjetas; 
-			for(TarjetaCredito tarjeta : tarjetas) { 
-				if(tarjeta.getCliente().getDni() == dniCliente) {
-					
-				} 
-			}			
+			}
+			else {
+				System.out.println("Dado que el origen del producto no es nacional no se aplicara el programa 'Ahora 30'");
+			}
 		}
 		else {
 			System.out.println("\nProducto no disponible");
 		}	
+}
+
+	
+	public static Credito crearCredito(TarjetaCredito tarjeta, Factura factura) {
+		List<Cuota> cuotas= new ArrayList<Cuota>();
+		Credito credito = new Credito(tarjeta, factura, cuotas);
+		CollectionCredito.agregarCredito(credito);
+		System.out.println("\nCredito generado.");
+		return credito;
 	}
+	
+	public static Factura crearFactura(long dniCliente, long codigo) {
+		
+		System.out.println("Ingrese la cantidad de productos que se desean comprar: ");
+		int cant = scanner.nextInt();
+		
+		scanner.nextLine();
+		
+        List<Detalle> detalles = new ArrayList<Detalle>();
+		Producto producto = CollectionProducto.buscarProducto(codigo);
+
+		Detalle detalle = new Detalle(cant, 0, producto);
+		detalles.add(detalle);
+
+		System.out.println("\nIngrese la fecha de la factura (dd/MM/yyyy): ");
+		String fechaFac = scanner.nextLine();
+		LocalDate fecFactura;
+		DateTimeFormatter formato = new DateTimeFormatterBuilder().append(DateTimeFormatter.ofPattern("dd/MM/yyyy")).toFormatter();
+        fecFactura = LocalDate.parse(fechaFac, formato);
+        
+		System.out.println("Ingrese el numero de factura: ");
+		long nroFac = scanner.nextLong();
+		Cliente cliente = CollectionCliente.buscarCliente(dniCliente);
+		
+		Factura factura = new Factura(fecFactura, nroFac, cliente, detalles);
+		CollectionFactura.agregarFactura(factura);
+		return factura;
+	}
+	
+	
 	
 	public static void verCompras(Scanner scanner) {
 		List<Cliente> clientes = CollectionCliente.clientes;
@@ -146,7 +181,7 @@ public class Main {
 		long dniCliente = scanner.nextLong();
 		
 		Cliente clienteBuscado = CollectionCliente.buscarCliente(dniCliente);
-		clienteBuscado.consultarCompras();
+		System.out.println(clienteBuscado.consultarCompras());
 	}
 
 	public static void mostrarElectrodomesticos() {
@@ -162,7 +197,9 @@ public class Main {
 		return CollectionStock.buscarStock(prodBuscado).getCantidad();
 	}
 	
-	public static void revisarCreditos() {
-		
+	
+	public static double revisarCreditos(long num) { 
+		TarjetaCredito tarjetaEncontrada = CollectionTarjetaCredito.buscarTarjetaCredito(num);
+		return tarjetaEncontrada.getLimiteCompra();
 	}
 }
