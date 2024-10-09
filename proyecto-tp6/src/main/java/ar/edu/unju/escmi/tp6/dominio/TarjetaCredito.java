@@ -48,15 +48,18 @@ public class TarjetaCredito {
 		this.cliente = cliente;
 	}
 
+	public double getLimiteCompra() {
+		return limiteCompra;
+	}
+	
 	public void setLimiteCompra(double limiteCompra) {
 		this.limiteCompra = limiteCompra;
 	}
 
 	
-	@Override
-	public String toString() {
-		return "\nNumero: " + numero + " Fecha De Caducacion: " + fechaCaducacion + "\nNombre Titular: "
-				+ cliente.getNombre() + ", Limite De Compra Actual:" + limiteCompra;
+	public void mostrarTarjeta() {
+		System.out.println("\nNumero: " +numero);
+		System.out.println("Titular de la tarjeta: " + cliente.getNombre());
+		System.out.println("Limite de compra actual: " + limiteCompra);
 	}
-
 }

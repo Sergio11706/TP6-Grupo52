@@ -74,4 +74,14 @@ public class Cliente {
 		}
 		return shoppingList;
 	}
+
+
+	public void mostrarCliente() {
+		System.out.println("\nDNI: " + dni);
+        System.out.println("Nombre: " + nombre);
+        System.out.println("Direccion: " + direccion);
+        System.out.println("Telefono: " + telefono);
+	}
+	
+	
 }

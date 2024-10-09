@@ -1,11 +1,19 @@
 package ar.edu.unju.escmi.tp6.main;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import ar.edu.unju.escmi.tp6.collections.CollectionCliente;
+import ar.edu.unju.escmi.tp6.collections.CollectionCredito;
+import ar.edu.unju.escmi.tp6.collections.CollectionFactura;
 import ar.edu.unju.escmi.tp6.collections.CollectionProducto;
 import ar.edu.unju.escmi.tp6.collections.CollectionStock;
 import ar.edu.unju.escmi.tp6.collections.CollectionTarjetaCredito;
+import ar.edu.unju.escmi.tp6.dominio.*;
 
 public class Main {
 	
@@ -13,8 +21,8 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		CollectionTarjetaCredito.precargarTarjetas();
         CollectionCliente.precargarClientes();
+		CollectionTarjetaCredito.precargarTarjetas();
         CollectionProducto.precargarProductos();
         CollectionStock.precargarStocks();
         int opcion = 0;
@@ -29,10 +37,296 @@ public class Main {
 
             System.out.println("Ingrese su opcion: ");
             opcion = scanner.nextInt();
+            
+            switch (opcion) {
+				case 1: 
+					int opc;
+					do {
+						System.out.println("\nQue operacion desea realizar?");
+						System.out.println("1- Registrar cliente.");
+						System.out.println("2- Realizar una venta con los clientes registrados.");
+						System.out.println("3- Salir.");
+						opc = scanner.nextInt();
+						switch(opc) {
+							case 1:
+								registrarCliente(scanner);
+								System.out.println("\nCliente y tarjeta registrados con exito.");
+							break;
+							case 2:
+								realizarVenta(scanner);
+								System.out.println("\nVenta realizada.");
+							break;
+							case 3: 
+								System.out.println("Retornando al menu...");
+							break;
+							default:
+								System.out.println("Opcion incorrecta. Intente nuevamente.");
+						}
+					} while (opc != 3);
+				break;
+				
+				case 2:
+					verCompras(scanner);
+				break;
+				
+				case 3:
+					mostrarElectrodomesticos();
+				break;
+				
+				case 4: 
+					long codigo = mostrarListaProd();
+					Producto prodBuscado = CollectionProducto.buscarProducto(codigo);
+					System.out.println("\nEl stock de " + prodBuscado.getDescripcion() + " es de " + consultarStock(codigo) + " unidades.");	
+				break;
+				
+				case 5: 
+					long num = 0;
+					List<Cliente> clientes = CollectionCliente.clientes;
+					for(Cliente cliente : clientes) {
+						cliente.mostrarCliente();
+					}
+					System.out.println("\nIngrese el DNI del cliente: ");
+					long dni = scanner.nextLong();
+					
+					List<TarjetaCredito> tarjetas = CollectionTarjetaCredito.tarjetas;
+					for(TarjetaCredito TarjetaCredito : tarjetas) {
+						if(TarjetaCredito.getCliente().getDni()==dni) {
+							num = TarjetaCredito.getNumero();
+							revisarCreditos(num);	
+						}
+					}
+				break;
+				
+				case 6:
+	                System.out.println("SALIENDO DEL MENU");
+	                break;
+	            default:
+	                System.out.println("OPCION INVALIDA. Intentelo nuevamente");
+			}
 
         }while(opcion != 6);
         scanner.close();
 
 	}
+	
+	public static void registrarCliente(Scanner scanner){
+		System.out.println("\nIngrese el dni del cliente: ");
+		long dni = scanner.nextLong();
+		scanner.nextLine();
+		System.out.println("Ingrese nombre del cliente: ");
+		String nombre = scanner.nextLine();
+		System.out.println("Ingrese direccion del cliente: ");
+		String dir = scanner.nextLine();
+		System.out.println("Ingrese numero de telefonico del cliente: ");
+		String tel = scanner.nextLine();
+		Cliente cliente = new Cliente(dni, nombre, dir, tel);
+		CollectionCliente.agregarCliente(cliente);
+		registrarTarjeta(cliente);
+	}
+	
+	public static void registrarTarjeta(Cliente cliente) {
+		System.out.println("Ingrese el numero de la tarjeta: ");
+		long num = scanner.nextLong();
+		scanner.nextLine();
+		System.out.println("Ingrese fecha de caducacion (dd/MM/yyyy): ");
+		String fechaCad = scanner.nextLine();
+		LocalDate fecCad;
+		DateTimeFormatter formato = new DateTimeFormatterBuilder().append(DateTimeFormatter.ofPattern("dd/MM/yyyy")).toFormatter();
+        fecCad = LocalDate.parse(fechaCad, formato);
+		System.out.println("Ingrese limite de compra: ");
+		double lim = scanner.nextDouble();
+		
+		TarjetaCredito tarjetaCredito = new TarjetaCredito(num, fecCad, cliente, lim);
+		CollectionTarjetaCredito.agregarTarjetaCredito(tarjetaCredito);
+	}
+	
+	public static long mostrarListaProd() {
+		List<Producto> productos = CollectionProducto.productos;
+		for(Producto producto : productos) {
+			producto.mostrarProducto();
+		}
+		System.out.println("\nIngrese el codigo del producto: ");
+		long codProd = scanner.nextLong();
+		return codProd;
+	}
+	  
+	
+	public static void realizarVenta(Scanner scanner){
+		TarjetaCredito tarjetaEncontrada = null;
+		System.out.println("Ingrese el codigo del producto a comprar: ");
+		long codigo = mostrarListaProd();
+		Producto productoAcomprar = CollectionProducto.buscarProducto(codigo);
+		
+		List<Cliente> clientes = CollectionCliente.clientes;
+		for (Cliente cliente : clientes) {
+			cliente.mostrarCliente();
+		}
+		System.out.println("\nIngrese el DNI del cliente: ");
+		long dni = scanner.nextLong();
+		
+		List<TarjetaCredito> tarjetas = CollectionTarjetaCredito.tarjetas;
+		for(TarjetaCredito TarjetaCredito : tarjetas) {
+			TarjetaCredito.mostrarTarjeta();
+		}
+		System.out.println("\nIngrese el numero de la tarjeta: ");
+		long num = scanner.nextLong();
+		
+		tarjetaEncontrada = CollectionTarjetaCredito.buscarTarjetaCredito(num);
+		
+		
+		if(consultarStock(codigo) > 0) {
+			if (productoAcomprar.getOrigenFabricacion().contains("Argentina")) {
+					if (consultarLimite(num)>productoAcomprar.getPrecioUnitario()) {
+						Factura factura = new Factura();
+						Credito credito = new Credito();
+						factura = crearFactura(dni, codigo);
+						credito = crearCredito(tarjetaEncontrada, factura);
+					}
+					else {
+						System.out.println("No cuenta con el credito necesario para realizar la transaccion.");
+					}
+			}
+			else {
+				System.out.println("Dado que el origen del producto no es nacional no se aplicara el programa 'Ahora 30'");
+				scanner.nextLine();
+				System.out.println("\nDesea continuar con la compra (y/n)? (El programa de cuotas no se aplicara)");
+				String opc = scanner.nextLine();
+				switch(opc){
+					case "y":
+						Factura factura = crearFacturaEspecial(dni, codigo, tarjetaEncontrada);	
+					break;
+					case "n":
+						System.out.println("Retornando al menu...");
+					break;
+				}
+			}
+		}
+		else {
+			System.out.println("\nProducto no disponible");
+		}	
+}
 
+	public static Factura crearFacturaEspecial(long dni, long codigo, TarjetaCredito tarjetaEncontrada) {
+		
+		System.out.println("Ingrese la cantidad de productos que se desean comprar: ");
+		int cant = scanner.nextInt();
+		tarjetaEncontrada.setLimiteCompra(tarjetaEncontrada.getLimiteCompra()-CollectionProducto.buscarProducto(codigo).getPrecioUnitario()*cant);
+
+		
+		scanner.nextLine();
+		
+        List<Detalle> detalles = new ArrayList<Detalle>();
+		Producto producto = CollectionProducto.buscarProducto(codigo);
+
+		Detalle detalle = new Detalle(cant, 0, producto);
+		detalles.add(detalle);
+
+		System.out.println("\nIngrese la fecha de la factura (dd/MM/yyyy): ");
+		String fechaFac = scanner.nextLine();
+		LocalDate fecFactura;
+		DateTimeFormatter formato = new DateTimeFormatterBuilder().append(DateTimeFormatter.ofPattern("dd/MM/yyyy")).toFormatter();
+        fecFactura = LocalDate.parse(fechaFac, formato);
+        
+		System.out.println("Ingrese el numero de factura: ");
+		long nroFac = scanner.nextLong();
+		Cliente cliente = CollectionCliente.buscarCliente(dni);
+		
+		Factura factura = new Factura(fecFactura, nroFac, cliente, detalles);
+		CollectionFactura.agregarFactura(factura);
+		
+		Stock stock = CollectionStock.buscarStock(producto);
+		CollectionStock.reducirStock(stock, cant);
+
+		return factura;
+	}
+	
+	public static Credito crearCredito(TarjetaCredito tarjeta, Factura factura) {
+		List<Cuota> cuotas= new ArrayList<Cuota>();
+		Credito credito = new Credito(tarjeta, factura, cuotas);
+		CollectionCredito.agregarCredito(credito);
+		tarjeta.setLimiteCompra(tarjeta.getLimiteCompra()-factura.calcularTotal()/30);
+		
+		System.out.println("\nCredito generado.");
+		return credito;
+	}
+	
+	public static Factura crearFactura(long dniCliente, long codigo) {
+		
+		System.out.println("Ingrese la cantidad de productos que se desean comprar: ");
+		int cant = scanner.nextInt();
+		
+		scanner.nextLine();
+		
+        List<Detalle> detalles = new ArrayList<Detalle>();
+		Producto producto = CollectionProducto.buscarProducto(codigo);
+
+		Detalle detalle = new Detalle(cant, 0, producto);
+		detalles.add(detalle);
+
+		System.out.println("\nIngrese la fecha de la factura (dd/MM/yyyy): ");
+		String fechaFac = scanner.nextLine();
+		LocalDate fecFactura;
+		DateTimeFormatter formato = new DateTimeFormatterBuilder().append(DateTimeFormatter.ofPattern("dd/MM/yyyy")).toFormatter();
+        fecFactura = LocalDate.parse(fechaFac, formato);
+        
+		System.out.println("Ingrese el numero de factura: ");
+		long nroFac = scanner.nextLong();
+		Cliente cliente = CollectionCliente.buscarCliente(dniCliente);
+		
+		Factura factura = new Factura(fecFactura, nroFac, cliente, detalles);
+		CollectionFactura.agregarFactura(factura);
+		
+		Stock stock = CollectionStock.buscarStock(producto);
+		CollectionStock.reducirStock(stock, cant);
+
+		return factura;
+	}
+	
+	
+	
+	public static void verCompras(Scanner scanner) {
+		List<Cliente> clientes = CollectionCliente.clientes;
+		for (Cliente cliente : clientes) {
+			cliente.mostrarCliente();
+		}
+		System.out.println("\nIngrese el DNI del cliente: ");
+		long dniCliente = scanner.nextLong();
+		
+		Cliente clienteBuscado = CollectionCliente.buscarCliente(dniCliente);
+		System.out.println(clienteBuscado.consultarCompras());
+	}
+
+	public static void mostrarElectrodomesticos() {
+		System.out.println("\nElectrodomesticos: ");
+		List<Producto> productos = CollectionProducto.productos;
+		for(Producto producto : productos) {
+			if(!producto.getDescripcion().contains("Celular")) producto.mostrarProducto();
+		}
+	}
+	
+	public static long consultarStock(long codigo) {
+		Producto prodBuscado = CollectionProducto.buscarProducto(codigo);
+		return CollectionStock.buscarStock(prodBuscado).getCantidad();
+	}
+	
+	public static double consultarLimite(long num) {
+		TarjetaCredito tarjetaEncontrada = CollectionTarjetaCredito.buscarTarjetaCredito(num);
+		return tarjetaEncontrada.getLimiteCompra();
+	}
+	
+	
+	public static void revisarCreditos(long num) { 
+		List<Credito> creditos = CollectionCredito.creditos;
+		for(Credito credito : creditos) {
+			if(creditos==null) {
+				System.out.println("No existe el credito.");
+			}
+			else {
+				if(credito.getTarjetaCredito().getNumero()==num) {
+					System.out.println("Los creditos del cliente son: ");
+					credito.mostarCredito();
+				}
+			}
+		}
+	}
 }

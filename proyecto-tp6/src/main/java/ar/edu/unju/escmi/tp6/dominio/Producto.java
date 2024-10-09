@@ -50,6 +50,11 @@ public class Producto {
         this.origenFabricacion = origenFabricacion;
     }
 
+    public void mostrarProducto() {
+    	System.out.println("\nCodigo: " + codigo);
+    	System.out.println("Descripcion: " + descripcion);
+    }
+    
     @Override
     public String toString() {
         return "Codigo: " + codigo + " Descripcion: " + descripcion + " Precio Unitario: " + precioUnitario
