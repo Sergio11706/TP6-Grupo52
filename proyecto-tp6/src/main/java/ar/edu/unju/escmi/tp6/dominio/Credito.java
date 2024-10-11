@@ -16,7 +16,7 @@ public class Credito {
 	public Credito(TarjetaCredito tarjetaCredito, Factura factura, List<Cuota> cuotas) {
 		this.tarjetaCredito = tarjetaCredito;
 		this.factura = factura;
-		this.cuotas = cuotas;
+	    this.cuotas = new ArrayList<>();
 		generarCuotas();
 	}
 
