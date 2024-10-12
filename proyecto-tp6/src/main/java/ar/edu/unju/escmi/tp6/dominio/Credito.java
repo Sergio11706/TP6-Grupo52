@@ -9,14 +9,16 @@ public class Credito {
 	private TarjetaCredito tarjetaCredito;
 	private Factura factura;
 	private List<Cuota> cuotas = new ArrayList<Cuota>();
-
+	private double creditoRestante;
+	
 	public Credito() {
 	}
 
-	public Credito(TarjetaCredito tarjetaCredito, Factura factura, List<Cuota> cuotas) {
+	public Credito(TarjetaCredito tarjetaCredito, Factura factura, List<Cuota> cuotas, double creditoRestante) {
 		this.tarjetaCredito = tarjetaCredito;
 		this.factura = factura;
 	    this.cuotas = new ArrayList<>();
+	    this.creditoRestante = creditoRestante;
 		generarCuotas();
 	}
 
@@ -48,8 +50,17 @@ public class Credito {
 		this.cuotas = cuotas;
 	}
 	
+	public double getCreditoRestante() {
+		return creditoRestante;
+	}
+
+	public void setCreditoRestante(double creditoRestante) {
+		this.creditoRestante = creditoRestante;
+	}
+
 	public void generarCuotas() {
 		double montoCuota = this.factura.calcularTotal() / 30;
+		creditoRestante-=montoCuota;
 		int nroCuota = 0;
 		LocalDate currentDate = LocalDate.now();
 		LocalDate auxDate = LocalDate.now();
@@ -68,9 +79,13 @@ public class Credito {
 	}
 
 	public void mostarCredito() {
-		System.out.println("Tarjeta De Credito: " + tarjetaCredito.getNumero() + "\n" + factura + "\nCant. Cuotas:\n");
+		System.out.println("Tarjeta De Credito: " + tarjetaCredito.getNumero() + "\n" + factura + "\nCant. Cuotas:\n" + "");
+		System.out.println("Numero de factura" + factura.getNroFactura());
+		System.out.println("Cuotas");
 		for(Cuota cuota: cuotas) {
-			System.out.println(cuota);
+			System.out.println("\nNumero de cuota: "+cuota.getNroCuota());
+			System.out.println("Monto: "+cuota.getMonto());
 		}
 	}
+	
 }
