@@ -18,10 +18,10 @@ import ar.edu.unju.escmi.tp6.collections.CollectionTarjetaCredito;
 import ar.edu.unju.escmi.tp6.dominio.*;
 
 public class Main {
-	
-	static Scanner scanner = new Scanner(System.in);
 
 	public static void main(String[] args) {
+		
+		Scanner scanner = new Scanner(System.in);
 		
         CollectionCliente.precargarClientes();
 		CollectionTarjetaCredito.precargarTarjetas();

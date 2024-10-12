@@ -55,9 +55,4 @@ public class Producto {
     	System.out.println("Descripcion: " + descripcion);
     }
     
-    @Override
-    public String toString() {
-        return "Codigo: " + codigo + " Descripcion: " + descripcion + " Precio Unitario: " + precioUnitario
-                + " Origen fabricacion: " + origenFabricacion;
-    }
 }
